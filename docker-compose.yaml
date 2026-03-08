@@ -1,0 +1,15 @@
+services:
+  cloudflare-ddns:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: my-cloudflare-ddns
+    container_name: custom-cloudflare-ddns
+    restart: always
+    environment:
+      - CF_API_TOKEN
+      - CF_ZONE
+      - CF_RECORD
+      - CF_RECORD_TYPE
+      - CF_PROXIED
+      - INTERVAL=300
