@@ -6,10 +6,18 @@ services:
     image: my-cloudflare-ddns
     container_name: custom-cloudflare-ddns
     restart: always
+    volumes:
+      # Directory (not file) bind mount, so editors that replace the file's
+      # inode still show the new content inside the container.
+      - ./config:/config:ro
     environment:
       - CF_API_TOKEN
       - CF_ZONE
-      - CF_RECORD
+      # Record list lives in ./config/records.conf and is re-read every cycle.
+      # CF_RECORD_TYPE / CF_PROXIED are the defaults for records that don't
+      # override them individually.
+      - CF_RECORDS_FILE=/config/records.conf
       - CF_RECORD_TYPE
       - CF_PROXIED
+      - LOG_LEVEL
       - INTERVAL=300
