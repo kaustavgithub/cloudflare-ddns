@@ -1,0 +1,46 @@
+# Builds the container image and publishes it to GitHub's registry:
+#   ghcr.io/kaustavgithub/cloudflare-ddns:sha-<commit>  (pin this)
+#   ghcr.io/kaustavgithub/cloudflare-ddns:latest        (main only)
+# On every push to main, and by hand (Actions -> image -> Run workflow).
+# The image holds only cf-ddns.py; the Cloudflare token and the record list
+# come from .env and config/ at runtime, never from the image.
+name: image
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=sha,prefix=sha-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
